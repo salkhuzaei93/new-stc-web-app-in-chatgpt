@@ -1,0 +1,2498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>STC Circuit Assurance</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --border: #d9dde6;
+      --text: #1b2430;
+      --muted: #5b677a;
+      --primary: #4f008c;
+      --accent: #ff375e;
+      --success: #1f9254;
+      --warning: #d9822b;
+      --danger: #c0342f;
+      --lock: #8d99ae;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.6rem;
+    }
+
+    p.lead {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(24, 32, 50, 0.08);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 1.1rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid rgba(79, 0, 140, 0.25);
+      border-color: var(--primary);
+    }
+
+    .helper {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .inline {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+    }
+
+    button:hover:not(:disabled) {
+      background: #3c006b;
+    }
+
+    button.secondary {
+      background: white;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    button.secondary:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .summary-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #f0f3fa;
+      font-size: 0.85rem;
+    }
+
+    .summary-item strong {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .command-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .command-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 12px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .command-card.locked {
+      background: #f8f9fc;
+      border-style: dashed;
+      color: var(--lock);
+    }
+
+    .command-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .status {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .status.ready {
+      background: rgba(79, 0, 140, 0.12);
+      color: var(--primary);
+    }
+
+    .status.locked {
+      background: rgba(141, 153, 174, 0.2);
+      color: var(--lock);
+    }
+
+    .status.copied {
+      background: rgba(255, 55, 94, 0.18);
+      color: var(--accent);
+    }
+
+    .command-text {
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      padding: 10px 12px;
+      background: #f3f4f8;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    .locked-message {
+      font-size: 0.85rem;
+      color: var(--lock);
+    }
+
+    .progressive-fields {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      background: #fbfbfd;
+    }
+
+    .small-tag {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .not-implemented {
+      border-left: 4px solid var(--accent);
+      background: #fff7ed;
+      color: #7a4c1b;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 10px;
+    }
+
+    .warning {
+      color: var(--warning);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .runner-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .runner-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 16px;
+      }
+
+      .runner-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>STC Circuit Assurance</h1>
+    <p class="lead">Operational checks made simple—copy one command at a time.</p>
+
+    <div class="card">
+      <h2>Inputs</h2>
+      <div class="form-grid">
+        <div>
+          <label for="circuitName">Circuit Name *</label>
+          <input id="circuitName" placeholder="JEDDAH-MAKKAH IP263" style="text-transform: uppercase;" />
+          <div class="helper">Format: &lt;SITE-A&gt;-&lt;SITE-Z&gt; &lt;TYPE&gt;&lt;ID&gt;</div>
+          <div class="error" data-error-for="circuitName"></div>
+        </div>
+        <div>
+          <label for="orderType">Order Type *</label>
+          <select id="orderType">
+            <option value="">Select</option>
+            <option value="I">I</option>
+            <option value="M">M</option>
+            <option value="C">C</option>
+            <option value="O">O</option>
+          </select>
+          <div class="error" data-error-for="orderType"></div>
+        </div>
+        <div>
+          <label for="transportType">Transport Type *</label>
+          <select id="transportType">
+            <option value="">Select</option>
+            <option value="Fiber">Fiber</option>
+            <option value="Copper">Copper</option>
+            <option value="Transmission">Transmission</option>
+            <option value="UPE">UPE</option>
+          </select>
+          <div class="error" data-error-for="transportType"></div>
+        </div>
+        <div>
+          <label for="aggVendor">Aggregator PE Vendor *</label>
+          <select id="aggVendor">
+            <option value="">Select</option>
+            <option value="Cisco">Cisco</option>
+            <option value="Huawei">Huawei</option>
+            <option value="Juniper">Juniper</option>
+          </select>
+          <div class="error" data-error-for="aggVendor"></div>
+        </div>
+        <div>
+          <label for="aggregatorPe">Aggregator PE Name *</label>
+          <input id="aggregatorPe" placeholder="AGG-PE-01" />
+          <div class="error" data-error-for="aggregatorPe"></div>
+        </div>
+        <div id="upeNameField" style="display: none;">
+          <label for="upeName">UPE Name (required if UPE)</label>
+          <input id="upeName" placeholder="UPE-01" />
+          <div class="error" data-error-for="upeName"></div>
+        </div>
+        <div id="upeModelField" style="display: none;">
+          <label for="upeModel">UPE Model *</label>
+          <select id="upeModel">
+            <option value="">Select</option>
+            <option value="UPE9 / UPE54">UPE9 / UPE54</option>
+            <option value="UPE92 / UPE52">UPE92 / UPE52 (not implemented)</option>
+            <option value="UPE3">UPE3 (not implemented)</option>
+          </select>
+          <div class="error" data-error-for="upeModel"></div>
+        </div>
+        <div>
+          <label for="vlanId">VLAN ID *</label>
+          <input id="vlanId" type="number" min="1" max="4094" />
+          <div class="error" data-error-for="vlanId"></div>
+        </div>
+        <div id="interfaceField">
+          <label for="interfaceName">Interface (optional)</label>
+          <input id="interfaceName" placeholder="Bundle-Ether10.263" />
+          <div class="helper">Required to unlock interface-dependent commands.</div>
+        </div>
+        <div id="upeVendorField" style="display: none;">
+          <label for="upeVendor">UPE Vendor (required if UPE)</label>
+          <select id="upeVendor">
+            <option value="">Select</option>
+            <option value="Cisco">Cisco</option>
+            <option value="Huawei">Huawei</option>
+            <option value="Juniper">Juniper</option>
+          </select>
+          <div class="error" data-error-for="upeVendor"></div>
+        </div>
+        <div>
+          <label for="customerIp">Customer IP (Layer 3) *</label>
+          <input id="customerIp" placeholder="192.0.2.10" />
+          <div class="error" data-error-for="customerIp"></div>
+        </div>
+        <div>
+          <label for="defaultGateway">Default Gateway (Layer 3) *</label>
+          <input id="defaultGateway" placeholder="192.0.2.1" />
+          <div class="error" data-error-for="defaultGateway"></div>
+        </div>
+        <div>
+          <label for="vrfName" id="vrfLabelText">VRF Name *</label>
+          <input id="vrfName" placeholder="VRF-Example" />
+          <div class="helper" id="vrfLabel">Cisco: VRF Name</div>
+          <div class="error" data-error-for="vrfName"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top: 16px;">
+        <h2>Layer Determination</h2>
+        <div id="layerInfo" class="helper">Layer is inferred from circuit token.</div>
+        <div id="layerOverride" class="inline" style="margin-top: 10px; display: none;">
+          <strong>Manual Override:</strong>
+          <label><input type="radio" name="layerChoice" value="L2"> Layer 2</label>
+          <label><input type="radio" name="layerChoice" value="L3"> Layer 3</label>
+        </div>
+        <div class="error" data-error-for="layerChoice"></div>
+      </div>
+      <div class="buttons" style="margin-top: 16px;">
+        <button id="generate">Build Command Runner</button>
+        <button id="reset" class="secondary">Reset Form</button>
+        <button id="download" class="secondary" disabled>Download All Commands (.txt)</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+      <h2>Classification Summary</h2>
+      <div id="summary" class="summary-grid"></div>
+      <div id="notImplemented" class="not-implemented" style="display: none;"></div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+      <h2>Command Runner</h2>
+      <div id="runnerGrid" class="runner-grid">
+        <div class="runner-panel">
+          <h3>Aggregator Command Runner</h3>
+          <div id="commandRunner" class="command-list"></div>
+          <div id="escalationNote" class="helper" style="margin-top: 12px; display: none;"></div>
+        </div>
+        <div class="runner-panel" id="upeRunnerPanel" style="display: none;">
+          <h3>UPE Command Runner</h3>
+          <div id="upeCommandRunner" class="command-list"></div>
+          <div id="upeNotImplemented" class="not-implemented" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      inputs: {
+        circuitName: "",
+        orderType: "",
+        transportType: "",
+        aggregatorPe: "",
+        upeName: "",
+        upeModel: "",
+        vlanId: "",
+        interfaceName: "",
+        aggVendor: "",
+        upeVendor: "",
+        customerIp: "",
+        defaultGateway: "",
+        vrfName: "",
+        huaweiL2Uplink: "",
+        juniperIfaceCount: "",
+        juniperIfaces: [],
+        juniperL2IfaceCount: "",
+        juniperL2Ifaces: [],
+        juniperL2RiName: "",
+        upeSubifCount: "",
+        upeSubinterfaces: [],
+        upeUplinkSubif: "",
+        upeBridgeGroup: "",
+        upeBridgeDomain: "",
+        upeCpuLocationChoice: "",
+        upeCpuLocationManual: "",
+        layerChoice: "",
+        bridgeGroup: "",
+        bridgeDomain: "",
+        cpuLocationChoice: "",
+        cpuLocationManual: "",
+        bviId: ""
+      },
+      derived: {
+        parsedCircuit: null,
+        inferredLayer: "",
+        layerSource: ""
+      },
+      progress: {
+        aggCopied: {},
+        upeCopied: {},
+        revealBridge: false,
+        revealL2Bd: false,
+        revealHuaweiL2Uplink: false,
+        revealJuniperIfaces: false,
+        revealJuniperL2Ifaces: false,
+        revealJuniperL2Ri: false,
+        revealUpeSubifs: false,
+        revealUpeBridge: false
+      }
+    };
+
+    const fieldIds = Object.keys(state.inputs);
+
+    function parseCircuitName(value) {
+      if (!value) return null;
+      const cleaned = value.trim().toUpperCase();
+      const match = cleaned.match(/^([A-Z0-9]+)-([A-Z0-9]+)\s+([A-Z]+)(\d+)$/);
+      if (!match) return null;
+      return {
+        siteA: match[1],
+        siteZ: match[2],
+        serviceToken: match[3],
+        serviceId: match[4],
+        fullToken: `${match[3]}${match[4]}`
+      };
+    }
+
+    function inferLayer(serviceToken) {
+      if (!serviceToken) return "";
+      const token = serviceToken.toUpperCase();
+      if (["IP", "SIP"].includes(token)) return "L3";
+      if (["DIA", "DIAS", "PLL", "DLL", "MDIA"].includes(token)) return "L2";
+      return "UNKNOWN";
+    }
+
+    function validateIPv4(value) {
+      const parts = value.trim().split(".");
+      if (parts.length !== 4) return false;
+      return parts.every(part => {
+        if (!/^\d+$/.test(part)) return false;
+        const num = Number(part);
+        return num >= 0 && num <= 255;
+      });
+    }
+
+    function setError(field, message) {
+      const el = document.querySelector(`[data-error-for="${field}"]`);
+      if (el) {
+        el.textContent = message || "";
+      }
+    }
+
+    function syncInputs() {
+      fieldIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        state.inputs[id] = el.value.trim();
+      });
+      const choice = document.querySelector('input[name="layerChoice"]:checked');
+      state.inputs.layerChoice = choice ? choice.value : "";
+    }
+
+    function updateDerived() {
+      const parsed = parseCircuitName(state.inputs.circuitName);
+      state.derived.parsedCircuit = parsed;
+      if (parsed) {
+        const inferred = inferLayer(parsed.serviceToken);
+        state.derived.inferredLayer = inferred;
+      } else {
+        state.derived.inferredLayer = "";
+      }
+    }
+
+    function determineLayer() {
+      if (state.derived.inferredLayer && state.derived.inferredLayer !== "UNKNOWN") {
+        state.derived.layerSource = "inferred";
+        return state.derived.inferredLayer;
+      }
+      if (state.derived.inferredLayer === "UNKNOWN" && state.inputs.layerChoice) {
+        state.derived.layerSource = "manual";
+        return state.inputs.layerChoice;
+      }
+      return "";
+    }
+
+    function validateAll() {
+      syncInputs();
+      updateDerived();
+      const errors = {};
+      if (!state.inputs.circuitName) {
+        errors.circuitName = "Circuit name is required.";
+      } else if (!state.derived.parsedCircuit) {
+        errors.circuitName = "Circuit name format is invalid.";
+      }
+
+      if (!state.inputs.orderType) {
+        errors.orderType = "Order type is required.";
+      }
+      if (!state.inputs.transportType) {
+        errors.transportType = "Transport type is required.";
+      }
+      const needsAgg = ["Fiber", "Copper", "Transmission", "UPE"].includes(state.inputs.transportType);
+      if (needsAgg && !state.inputs.aggregatorPe) {
+        errors.aggregatorPe = "Aggregator PE name is required.";
+      }
+      if (state.inputs.transportType === "UPE" && !state.inputs.upeName) {
+        errors.upeName = "UPE name is required for UPE transport.";
+      }
+      if (state.inputs.transportType === "UPE" && !state.inputs.upeModel) {
+        errors.upeModel = "UPE model is required for UPE transport.";
+      }
+      const vlan = Number(state.inputs.vlanId);
+      if (!state.inputs.vlanId) {
+        errors.vlanId = "VLAN ID is required.";
+      } else if (!Number.isInteger(vlan) || vlan < 1 || vlan > 4094) {
+        errors.vlanId = "VLAN must be between 1 and 4094.";
+      }
+      if (!state.inputs.aggVendor) {
+        errors.aggVendor = "Aggregator PE vendor is required.";
+      }
+      if (state.inputs.transportType === "UPE" && !state.inputs.upeVendor) {
+        errors.upeVendor = "UPE vendor is required for UPE transport.";
+      }
+
+      const layer = determineLayer();
+      if (!layer) {
+        errors.layerChoice = "Layer cannot be determined. Select a manual override.";
+      }
+
+      if (layer === "L3") {
+        if (!state.inputs.customerIp) {
+          errors.customerIp = "Customer IP is required for Layer 3.";
+        } else if (!validateIPv4(state.inputs.customerIp)) {
+          errors.customerIp = "Customer IP must be a valid IPv4 address.";
+        }
+        if (!state.inputs.defaultGateway) {
+          errors.defaultGateway = "Default gateway is required for Layer 3.";
+        } else if (!validateIPv4(state.inputs.defaultGateway)) {
+          errors.defaultGateway = "Default gateway must be a valid IPv4 address.";
+        }
+        if (!state.inputs.vrfName) {
+          errors.vrfName = "Routing context name is required for Layer 3.";
+        }
+      }
+
+      fieldIds.forEach(field => setError(field, ""));
+      setError("layerChoice", "");
+      Object.entries(errors).forEach(([field, message]) => setError(field, message));
+
+      return {
+        isValid: Object.keys(errors).length === 0,
+        errors
+      };
+    }
+
+    function normalizeHuaweiInterface(input) {
+      const trimmed = (input || "").trim();
+      if (!trimmed) return "";
+      if (/^\\d+$/.test(trimmed)) {
+        return `Eth-Trunk${trimmed}`;
+      }
+      return trimmed;
+    }
+
+    function normalizeHuaweiEthTrunk(input) {
+      const trimmed = (input || "").trim();
+      if (!trimmed) return "";
+      if (/^\\d+$/.test(trimmed)) {
+        return `Eth-Trunk${trimmed}`;
+      }
+      return trimmed;
+    }
+
+    function resolveCpuLocation() {
+      if (state.inputs.cpuLocationChoice === "unknown") {
+        return "?";
+      }
+      if (state.inputs.cpuLocationChoice === "manual") {
+        return (state.inputs.cpuLocationManual || "").trim();
+      }
+      return "";
+    }
+
+    function resolveUpeCpuLocation() {
+      if (state.inputs.upeCpuLocationChoice === "manual") {
+        return (state.inputs.upeCpuLocationManual || "").trim();
+      }
+      return (state.inputs.upeCpuLocationChoice || "").trim();
+    }
+
+    function buildCiscoL3Commands() {
+      const parsed = state.derived.parsedCircuit;
+      if (!parsed) return [];
+      const fullToken = parsed.fullToken;
+      const interfaceName = state.inputs.interfaceName;
+      const vrf = state.inputs.vrfName;
+      const customerIp = state.inputs.customerIp;
+      const bridgeGroup = state.inputs.bridgeGroup || "";
+      const bridgeDomain = state.inputs.bridgeDomain || "";
+      const bviId = state.inputs.bviId || "";
+      const aggregatorPe = state.inputs.aggregatorPe || "";
+
+      return [
+        {
+          id: 0,
+          label: "Step 0",
+          template: aggregatorPe ? `connect ${aggregatorPe}` : "connect Aggregator PE Name *",
+          requires: ["aggregator"]
+        },
+        {
+          id: 1,
+          label: "Step 1",
+          template: `sh int desc | i ${fullToken}`,
+          requires: []
+        },
+        {
+          id: 2,
+          label: "Step 2",
+          template: interfaceName ? `sh run int ${interfaceName}` : "sh run int <INTERFACE>",
+          requires: ["interface"]
+        },
+        {
+          id: 3,
+          label: "Step 3",
+          template: interfaceName
+            ? `sh l2vpn bridge-domain interface ${interfaceName} brief`
+            : "sh l2vpn bridge-domain interface <INTERFACE> brief",
+          requires: ["interface"]
+        },
+        {
+          id: 4,
+          label: "Step 4",
+          template: bridgeGroup && bridgeDomain
+            ? `sh run l2vpn bridge group ${bridgeGroup} bridge-domain ${bridgeDomain}`
+            : "sh run l2vpn bridge group <BRIDGE_GROUP> bridge-domain <BRIDGE_DOMAIN>",
+          requires: ["bridge"]
+        },
+        {
+          id: 5,
+          label: "Step 5",
+          template: bviId ? `sh run int BVI${bviId}` : "sh run int BVI<BVI_ID>",
+          requires: ["bvi"]
+        },
+        {
+          id: 6,
+          label: "Step 6",
+          template: vrf && customerIp
+            ? `sh arp vrf ${vrf} ${customerIp}`
+            : "sh arp vrf <VRF> <CUSTOMER_IP>",
+          requires: ["vrf"]
+        },
+        {
+          id: 7,
+          label: "Step 7",
+          template: vrf && customerIp
+            ? `ping vrf ${vrf} ${customerIp} count 100`
+            : "ping vrf <VRF> <CUSTOMER_IP> count 100",
+          requires: ["vrf"]
+        },
+        {
+          id: 8,
+          label: "Step 8",
+          template: vrf && customerIp
+            ? `show bgp vrf ${vrf} summary | i ${customerIp}`
+            : "show bgp vrf <VRF> summary | i <CUSTOMER_IP>",
+          requires: ["vrf"]
+        }
+      ];
+    }
+
+    function buildHuaweiL3Commands() {
+      const vlanId = state.inputs.vlanId;
+      const interfaceName = normalizeHuaweiInterface(state.inputs.interfaceName);
+      const vpnInstance = state.inputs.vrfName;
+      const customerIp = state.inputs.customerIp;
+      const aggregatorPe = state.inputs.aggregatorPe || "";
+
+      return [
+        {
+          id: 0,
+          label: "Step 0",
+          template: aggregatorPe ? `connect ${aggregatorPe}` : "connect Aggregator PE Name *",
+          requires: ["aggregator"]
+        },
+        {
+          id: 1,
+          label: "Step 1",
+          template: vlanId ? `dis cur int vl ${vlanId}` : "dis cur int vl <VLAN_ID>",
+          requires: ["vlan"]
+        },
+        {
+          id: 2,
+          label: "Step 2",
+          template: vlanId ? `dis mac-address dynamic vlan ${vlanId}` : "dis mac-address dynamic vlan <VLAN_ID>",
+          requires: ["vlan"]
+        },
+        {
+          id: 3,
+          label: "Step 3",
+          template: vlanId && interfaceName
+            ? `display current-configuration interface ${interfaceName} | i ${vlanId}`
+            : "display current-configuration interface <INTERFACE> | i <VLAN_ID>",
+          requires: ["vlan", "interfaceHuawei"]
+        },
+        {
+          id: 4,
+          label: "Step 4",
+          template: vpnInstance && customerIp
+            ? `ping -c 10 -vpn-instance ${vpnInstance} ${customerIp}`
+            : "ping -c 10 -vpn-instance <VPN_INSTANCE> <CUSTOMER_IP>",
+          requires: ["vpn"]
+        },
+        {
+          id: 5,
+          label: "Step 5",
+          template: vpnInstance && customerIp
+            ? `display bgp vpnv4 vpn-instance ${vpnInstance} peer | i ${customerIp}`
+            : "display bgp vpnv4 vpn-instance <VPN_INSTANCE> peer | i <CUSTOMER_IP>",
+          requires: ["vpn"]
+        }
+      ];
+    }
+
+    function buildHuaweiL2Commands() {
+      const vlanId = state.inputs.vlanId;
+      const vsiName = vlanId ? `Vlan${vlanId}` : "";
+      const uplinkInterface = normalizeHuaweiEthTrunk(state.inputs.huaweiL2Uplink);
+      const aggregatorPe = state.inputs.aggregatorPe || "";
+
+      return [
+        {
+          id: 0,
+          label: "Step 0",
+          title: "Connect",
+          template: aggregatorPe ? `connect ${aggregatorPe}` : "connect Aggregator PE Name *",
+          requires: ["aggregator"]
+        },
+        {
+          id: 1,
+          label: "Step 1",
+          title: "Check CKT Info",
+          template: vlanId ? `dis cur int vl ${vlanId}` : "dis cur int vl <VLAN_ID>",
+          requires: ["vlan"]
+        },
+        {
+          id: 2,
+          label: "Step 2",
+          title: "Check MAC",
+          template: vlanId ? `display mac-address dynamic vsi Vlan${vlanId}` : "display mac-address dynamic vsi Vlan<VLAN_ID>",
+          requires: ["vlan"]
+        },
+        {
+          id: 3,
+          label: "Step 3",
+          title: "Check Policy/Speed",
+          template: uplinkInterface && vlanId
+            ? `display current-configuration interface ${uplinkInterface} | i ${vlanId}`
+            : "display current-configuration interface <UPLINK_INTERFACE> | i <VLAN_ID>",
+          requires: ["vlan", "huaweiL2Uplink"]
+        }
+      ];
+    }
+
+    function buildJuniperL3Commands() {
+      const vlanId = state.inputs.vlanId;
+      const customerIp = state.inputs.customerIp;
+      const routingInstance = state.inputs.vrfName;
+      const parsed = state.derived.parsedCircuit;
+      const circuitToken = parsed ? parsed.fullToken : "";
+      const interfaces = Array.isArray(state.inputs.juniperIfaces) ? state.inputs.juniperIfaces : [];
+      const aggregatorPe = state.inputs.aggregatorPe || "";
+      const commands = [
+        {
+          id: 0,
+          label: "Step 0",
+          title: "Connect",
+          template: aggregatorPe ? `connect ${aggregatorPe}` : "connect Aggregator PE Name *",
+          requires: ["aggregator"]
+        },
+        {
+          id: 1,
+          label: "Step 1",
+          title: "Find Interface",
+          template: circuitToken ? `show interfaces description | match ${circuitToken}` : "show interfaces description | match <CIRCUIT_TOKEN>",
+          requires: ["juniperToken"]
+        },
+        {
+          id: 2,
+          label: "Step 2",
+          title: "VLAN Config",
+          template: vlanId ? `show configuration | display set | match ${vlanId}` : "show configuration | display set | match <VLAN_ID>",
+          requires: ["vlan"]
+        }
+      ];
+
+      interfaces.forEach((iface, index) => {
+        const suffix = index + 1;
+        commands.push({
+          id: 301 + index,
+          label: `Step 3.${suffix} (Interface ${suffix})`,
+          title: "Interface Match",
+          template: iface ? `show configuration | display set | match ${iface}` : "show configuration | display set | match <INTERFACE>",
+          requires: ["juniperIfaces"]
+        });
+      });
+      interfaces.forEach((iface, index) => {
+        const suffix = index + 1;
+        commands.push({
+          id: 401 + index,
+          label: `Step 4.${suffix} (Interface ${suffix})`,
+          title: "Interface Config",
+          template: iface ? `show configuration interfaces ${iface}` : "show configuration interfaces <INTERFACE>",
+          requires: ["juniperIfaces"]
+        });
+      });
+      interfaces.forEach((iface, index) => {
+        const suffix = index + 1;
+        commands.push({
+          id: 501 + index,
+          label: `Step 5.${suffix} (Interface ${suffix})`,
+          title: "ARP Interface",
+          template: iface ? `show arp no-resolve interface ${iface}` : "show arp no-resolve interface <INTERFACE>",
+          requires: ["juniperIfaces"]
+        });
+      });
+
+      commands.push(
+        {
+          id: 6,
+          label: "Step 6",
+          title: "ARP VPN",
+          template: routingInstance && customerIp
+            ? `show arp vpn ${routingInstance} | match ${customerIp}`
+            : "show arp vpn <ROUTING_INSTANCE> | match <IP_ADDRESS>",
+          requires: ["juniperRouteIp"]
+        },
+        {
+          id: 7,
+          label: "Step 7",
+          title: "PING Rapid",
+          template: routingInstance && customerIp
+            ? `ping routing-instance ${routingInstance} ${customerIp} rapid count 100`
+            : "ping routing-instance <ROUTING_INSTANCE> <IP_ADDRESS> rapid count 100",
+          requires: ["juniperRouteIp"]
+        },
+        {
+          id: 8,
+          label: "Step 8",
+          title: "PING Count",
+          template: routingInstance && customerIp
+            ? `ping routing-instance ${routingInstance} ${customerIp} count 100 rapid`
+            : "ping routing-instance <ROUTING_INSTANCE> <IP_ADDRESS> count 100 rapid",
+          requires: ["juniperRouteIp"]
+        },
+        {
+          id: 9,
+          label: "Step 9",
+          title: "BGP Summary",
+          template: customerIp ? `show bgp summary | match ${customerIp}` : "show bgp summary | match <IP_ADDRESS>",
+          requires: ["juniperIp"]
+        },
+        {
+          id: 10,
+          label: "Step 10",
+          title: "RI Config",
+          template: routingInstance
+            ? `show configuration routing-instances ${routingInstance}`
+            : "show configuration routing-instances <ROUTING_INSTANCE>",
+          requires: ["juniperRoute"]
+        }
+      );
+
+      return commands;
+    }
+
+    function buildJuniperL2Commands() {
+      const parsed = state.derived.parsedCircuit;
+      const circuitToken = parsed ? parsed.fullToken : "";
+      const vlanId = state.inputs.vlanId;
+      const riName = state.inputs.juniperL2RiName;
+      const ifaceBases = Array.isArray(state.inputs.juniperL2Ifaces) ? state.inputs.juniperL2Ifaces : [];
+      const aggregatorPe = state.inputs.aggregatorPe || "";
+      const commands = [
+        {
+          id: 0,
+          label: "Step 0",
+          title: "Connect",
+          template: aggregatorPe ? `connect ${aggregatorPe}` : "connect Aggregator PE Name *",
+          requires: ["aggregator"]
+        },
+        {
+          id: 1,
+          label: "Step 1",
+          title: "Find Interface",
+          template: circuitToken ? `show interfaces description | match ${circuitToken}` : "show interfaces description | match <CIRCUIT_TOKEN>",
+          requires: ["juniperTokenL2"]
+        },
+        {
+          id: 2,
+          label: "Step 2",
+          title: "Circuit Config",
+          template: circuitToken ? `show configuration | display set | match ${circuitToken}` : "show configuration | display set | match <CIRCUIT_TOKEN>",
+          requires: ["juniperTokenL2"]
+        }
+      ];
+
+      ifaceBases.forEach((iface, index) => {
+        const suffix = index + 1;
+        commands.push({
+          id: 301 + index,
+          label: `Step 3.${suffix} (Interface ${suffix})`,
+          title: "Interface Match",
+          template: vlanId && iface
+            ? `show configuration | display set | match ${vlanId} | match ${iface}`
+            : "show configuration | display set | match <VLAN_ID> | match <IFACE_BASE>",
+          requires: ["vlan", "juniperL2Ifaces"]
+        });
+      });
+
+      commands.push(
+        {
+          id: 4,
+          label: "Step 4",
+          title: "VPLS MAC",
+          template: riName ? `show vpls mac-table instance ${riName}` : "show vpls mac-table instance <RI_L2VPN>",
+          requires: ["juniperL2Ri"]
+        },
+        {
+          id: 5,
+          label: "Step 5",
+          title: "RI Config",
+          template: riName ? `show configuration routing-instances ${riName}` : "show configuration routing-instances <RI_L2VPN>",
+          requires: ["juniperL2Ri"]
+        }
+      );
+
+      return commands;
+    }
+
+    function buildCiscoL2Commands() {
+      const l2DisplayName = state.inputs.circuitName;
+      const interfaceName = state.inputs.interfaceName;
+      const bdName = state.inputs.bridgeDomain;
+      const bridgeGroup = state.inputs.bridgeGroup;
+      const cpuLocation = resolveCpuLocation();
+      const bridgeDomain = state.inputs.bridgeDomain;
+      const aggregatorPe = state.inputs.aggregatorPe || "";
+
+      return [
+        {
+          id: 0,
+          label: "Step 0",
+          title: "Connect",
+          template: aggregatorPe ? `connect ${aggregatorPe}` : "connect Aggregator PE Name *",
+          requires: ["aggregator"]
+        },
+        {
+          id: 1,
+          label: "Step 1",
+          title: "Find Interface",
+          template: l2DisplayName
+            ? `show interfaces description | i ${l2DisplayName}`
+            : "show interfaces description | i <CIRCUIT_NAME>",
+          requires: ["circuitNameL2"]
+        },
+        {
+          id: 2,
+          label: "Step 2",
+          title: "Check Interface Config",
+          template: interfaceName
+            ? `sho running-config interface ${interfaceName}`
+            : "sho running-config interface <INTERFACE>",
+          requires: ["interface"]
+        },
+        {
+          id: 3,
+          label: "Step 3",
+          title: "BD Summary",
+          template: interfaceName
+            ? `sho l2vpn bridge-domain interface ${interfaceName} brief`
+            : "sho l2vpn bridge-domain interface <INTERFACE> brief",
+          requires: ["interface"]
+        },
+        {
+          id: 4,
+          label: "Step 4",
+          title: "MAC Table",
+          template: bdName && bridgeGroup && cpuLocation
+            ? `show l2vpn forwarding bridge-domain ${bridgeGroup}:${bdName} mac-address location ${cpuLocation}`
+            : "show l2vpn forwarding bridge-domain <BRIDGE_GROUP>:<BRIDGE_DOMAIN> mac-address location <CPU_LOCATION>",
+          requires: ["l2Bd", "l2Cpu"]
+        },
+        {
+          id: 5,
+          label: "Step 5",
+          title: "BD Config",
+          template: bridgeGroup && bridgeDomain
+            ? `sh run l2vpn bridge group ${bridgeGroup} bridge-domain ${bridgeDomain}`
+            : "sh run l2vpn bridge group <BRIDGE_GROUP> bridge-domain <BRIDGE_DOMAIN>",
+          requires: ["l2Bridge"]
+        },
+        {
+          id: 6,
+          label: "Step 6",
+          title: "PE Loopback",
+          template: "sh run int lo0",
+          requires: []
+        }
+      ];
+    }
+
+    function buildUpe9_54Commands() {
+      const parsed = state.derived.parsedCircuit;
+      const circuitToken = parsed ? parsed.fullToken : "";
+      const upeName = state.inputs.upeName || "";
+      const vlanId = state.inputs.vlanId;
+      const subifs = Array.isArray(state.inputs.upeSubinterfaces) ? state.inputs.upeSubinterfaces : [];
+      const uplinkSubif = state.inputs.upeUplinkSubif || "";
+      const bridgeGroup = state.inputs.upeBridgeGroup || "";
+      const bridgeDomain = state.inputs.upeBridgeDomain || (vlanId ? String(vlanId) : "");
+      const cpuLocation = resolveUpeCpuLocation();
+
+      const commands = [
+        {
+          id: "upe-0",
+          label: "Step 0",
+          title: "Connect",
+          template: upeName ? `connect ${upeName}` : "connect UPE Name *",
+          requires: ["upeName"]
+        },
+        {
+          id: "upe-1",
+          label: "Step 1",
+          title: "Search by Circuit Token",
+          template: circuitToken ? `sh int desc | i ${circuitToken}` : "sh int desc | i <CIRCUIT_TOKEN>",
+          requires: ["upeToken"]
+        },
+        {
+          id: "upe-2",
+          label: "Step 2",
+          title: "Show All Interfaces",
+          template: "sh int desc",
+          requires: []
+        }
+      ];
+
+      subifs.forEach((subif, index) => {
+        const suffix = index + 1;
+        commands.push({
+          id: `upe-3-${suffix}`,
+          label: `Step 3.${suffix}`,
+          title: `Subinterface ${suffix}`,
+          template: subif ? `sh run int ${subif}` : "sh run int <UPE_SUBINTERFACE>",
+          requires: ["upeSubifs"]
+        });
+      });
+
+      commands.push(
+        {
+          id: "upe-4",
+          label: "Step 4",
+          title: "Bridge-Domain Brief",
+          template: uplinkSubif
+            ? `sh l2vpn bridge-domain interface ${uplinkSubif} brief`
+            : "sh l2vpn bridge-domain interface <UPLINK_SUBIF> brief",
+          requires: ["upeUplink"]
+        },
+        {
+          id: "upe-5",
+          label: "Step 5",
+          title: "Bridge Group Config",
+          template: bridgeGroup && bridgeDomain
+            ? `sh run l2vpn bridge group ${bridgeGroup} bridge-domain ${bridgeDomain}`
+            : "sh run l2vpn bridge group <BRIDGE_GROUP> bridge-domain <BRIDGE_DOMAIN>",
+          requires: ["upeBridge"]
+        },
+        {
+          id: "upe-6",
+          label: "Step 6",
+          title: "MAC Table Forwarding",
+          template: bridgeGroup && bridgeDomain && cpuLocation
+            ? `sh l2vpn forwarding bridge-domain ${bridgeGroup}:${bridgeDomain} mac-address location ${cpuLocation}`
+            : "sh l2vpn forwarding bridge-domain <BRIDGE_GROUP>:<BRIDGE_DOMAIN> mac-address location <CPU_LOCATION>",
+          requires: ["upeBridge", "upeCpu"]
+        }
+      );
+
+      return commands;
+    }
+
+    function buildCommandModel() {
+      const layer = determineLayer();
+      if (state.inputs.aggVendor === "Cisco" && layer === "L3") {
+        return buildCiscoL3Commands();
+      }
+      if (state.inputs.aggVendor === "Cisco" && layer === "L2") {
+        return buildCiscoL2Commands();
+      }
+      if (state.inputs.aggVendor === "Huawei" && layer === "L3") {
+        return buildHuaweiL3Commands();
+      }
+      if (state.inputs.aggVendor === "Huawei" && layer === "L2") {
+        return buildHuaweiL2Commands();
+      }
+      if (state.inputs.aggVendor === "Juniper" && layer === "L3") {
+        return buildJuniperL3Commands();
+      }
+      if (state.inputs.aggVendor === "Juniper" && layer === "L2") {
+        return buildJuniperL2Commands();
+      }
+      return [];
+    }
+
+    function buildUpeCommandModel() {
+      if (state.inputs.transportType !== "UPE") {
+        return { commands: [], implemented: true };
+      }
+      if (state.inputs.upeModel === "UPE9 / UPE54") {
+        return { commands: buildUpe9_54Commands(), implemented: true };
+      }
+      if (state.inputs.upeModel) {
+        return { commands: [], implemented: false };
+      }
+      return { commands: [], implemented: true };
+    }
+
+    function isLocked(command) {
+      if (command.requires.includes("aggregator") && !state.inputs.aggregatorPe) {
+        return { locked: true, reason: "Aggregator PE name is required to unlock this command." };
+      }
+      if (command.requires.includes("vlan") && !state.inputs.vlanId) {
+        return { locked: true, reason: "Provide VLAN ID to unlock this command." };
+      }
+      if (command.requires.includes("interface") && !state.inputs.interfaceName) {
+        return { locked: true, reason: "Interface not provided — add interface to unlock this command." };
+      }
+      if (command.requires.includes("interfaceHuawei") && !state.inputs.interfaceName) {
+        return { locked: true, reason: "Interface not provided — add Eth-Trunk interface to unlock this command." };
+      }
+      if (command.requires.includes("huaweiL2Uplink")) {
+        if (!state.progress.revealHuaweiL2Uplink) {
+          return { locked: true, reason: "Copy Step 2 to unlock the uplink interface input." };
+        }
+        if (!state.inputs.huaweiL2Uplink) {
+          return { locked: true, reason: "Provide uplink interface (e.g., Eth-Trunk65) to check policy/speed." };
+        }
+      }
+      if (command.requires.includes("circuitNameL2") && !state.inputs.circuitName) {
+        return { locked: true, reason: "Provide circuit name to unlock this command." };
+      }
+      if (command.requires.includes("l2Bd")) {
+        if (!state.progress.revealL2Bd) {
+          return { locked: true, reason: "Copy Step 3 to unlock Bridge Group/Domain inputs." };
+        }
+        if (!state.inputs.bridgeGroup || !state.inputs.bridgeDomain) {
+          return { locked: true, reason: "Provide Bridge Group and Bridge Domain to unlock this command." };
+        }
+      }
+      if (command.requires.includes("l2Cpu")) {
+        if (!state.inputs.bridgeGroup || !state.inputs.bridgeDomain) {
+          return { locked: true, reason: "Provide Bridge Group and Bridge Domain to unlock MAC check." };
+        }
+        if (!resolveCpuLocation()) {
+          return { locked: true, reason: "Select a MAC location option to run MAC table check." };
+        }
+      }
+      if (command.requires.includes("l2Bridge")) {
+        if (!state.inputs.bridgeGroup || !state.inputs.bridgeDomain) {
+          return { locked: true, reason: "Provide Bridge Group and Bridge Domain to unlock this command." };
+        }
+      }
+      if (command.requires.includes("bridge")) {
+        if (!state.inputs.bridgeGroup || !state.inputs.bridgeDomain) {
+          return { locked: true, reason: "Provide Bridge Group + Bridge Domain to unlock." };
+        }
+      }
+      if (command.requires.includes("bvi") && !state.inputs.bviId) {
+        return { locked: true, reason: "Optional: provide BVI ID to unlock this command." };
+      }
+      if (command.requires.includes("vrf")) {
+        if (!state.inputs.vrfName || !state.inputs.customerIp) {
+          return { locked: true, reason: "Provide VRF and Customer IP to unlock." };
+        }
+      }
+      if (command.requires.includes("vpn")) {
+        if (!state.inputs.vrfName || !state.inputs.customerIp) {
+          return { locked: true, reason: "Provide VPN Instance and Customer IP to unlock." };
+        }
+      }
+      if (command.requires.includes("juniperToken")) {
+        if (!state.derived.parsedCircuit) {
+          return { locked: true, reason: "Provide a valid circuit name to unlock." };
+        }
+      }
+      if (command.requires.includes("juniperTokenL2")) {
+        if (!state.derived.parsedCircuit) {
+          return { locked: true, reason: "Provide a valid circuit name to unlock." };
+        }
+      }
+      if (command.requires.includes("juniperIfaces")) {
+        const count = Number(state.inputs.juniperIfaceCount);
+        if (!state.progress.revealJuniperIfaces) {
+          return { locked: true, reason: "Copy Step 1 to reveal interface fields." };
+        }
+        if (!count || count < 1) {
+          return { locked: true, reason: "Enter number of interfaces to proceed." };
+        }
+        const list = Array.isArray(state.inputs.juniperIfaces) ? state.inputs.juniperIfaces : [];
+        if (list.length < count || list.some(value => !value)) {
+          return { locked: true, reason: "Fill all interface fields to unlock." };
+        }
+      }
+      if (command.requires.includes("juniperL2Ifaces")) {
+        const count = Number(state.inputs.juniperL2IfaceCount);
+        if (!state.progress.revealJuniperL2Ifaces) {
+          return { locked: true, reason: "Copy Step 1 to reveal interface fields." };
+        }
+        if (!count || count < 1) {
+          return { locked: true, reason: "Enter number of interfaces to proceed." };
+        }
+        const list = Array.isArray(state.inputs.juniperL2Ifaces) ? state.inputs.juniperL2Ifaces : [];
+        if (list.length < count || list.some(value => !value)) {
+          return { locked: true, reason: "Fill all interface fields to unlock." };
+        }
+      }
+      if (command.requires.includes("juniperL2Ri")) {
+        if (!state.progress.revealJuniperL2Ri) {
+          return { locked: true, reason: "Copy Step 2 to reveal Routing Instance." };
+        }
+        if (!state.inputs.juniperL2RiName) {
+          return { locked: true, reason: "Enter Routing Instance to unlock this step." };
+        }
+      }
+      if (command.requires.includes("juniperRouteIp")) {
+        if (!state.inputs.vrfName || !state.inputs.customerIp) {
+          return { locked: true, reason: "Provide Routing Instance and IP address to unlock." };
+        }
+      }
+      if (command.requires.includes("juniperIp")) {
+        if (!state.inputs.customerIp) {
+          return { locked: true, reason: "Provide IP address to unlock." };
+        }
+      }
+      if (command.requires.includes("juniperRoute")) {
+        if (!state.inputs.vrfName) {
+          return { locked: true, reason: "Provide Routing Instance to unlock." };
+        }
+      }
+      return { locked: false, reason: "" };
+    }
+
+    function isUpeLocked(command) {
+      if (command.requires.includes("upeName") && !state.inputs.upeName) {
+        return { locked: true, reason: "UPE name is required to unlock this command." };
+      }
+      if (command.requires.includes("upeToken")) {
+        if (!state.derived.parsedCircuit) {
+          return { locked: true, reason: "Provide a valid circuit name to unlock." };
+        }
+      }
+      if (command.requires.includes("upeSubifs")) {
+        const count = Number(state.inputs.upeSubifCount);
+        if (!state.progress.revealUpeSubifs) {
+          return { locked: true, reason: "Copy Step 1 to reveal subinterface fields." };
+        }
+        if (!count || count < 1) {
+          return { locked: true, reason: "Enter the number of subinterfaces to proceed." };
+        }
+        const list = Array.isArray(state.inputs.upeSubinterfaces) ? state.inputs.upeSubinterfaces : [];
+        if (list.length < count || list.some(value => !value)) {
+          return { locked: true, reason: "Fill all subinterface fields to unlock." };
+        }
+      }
+      if (command.requires.includes("upeUplink")) {
+        if (!state.inputs.upeUplinkSubif) {
+          return { locked: true, reason: "Select the uplink subinterface to unlock." };
+        }
+      }
+      if (command.requires.includes("upeBridge")) {
+        if (!state.progress.revealUpeBridge) {
+          return { locked: true, reason: "Copy Step 4 to reveal Bridge Group/Domain inputs." };
+        }
+        if (!state.inputs.upeBridgeGroup || !state.inputs.upeBridgeDomain) {
+          return { locked: true, reason: "Provide Bridge Group and Bridge Domain to unlock." };
+        }
+      }
+      if (command.requires.includes("upeCpu")) {
+        if (!state.inputs.upeBridgeGroup || !state.inputs.upeBridgeDomain) {
+          return { locked: true, reason: "Provide Bridge Group and Bridge Domain to unlock." };
+        }
+        if (!resolveUpeCpuLocation()) {
+          return { locked: true, reason: "Select a CPU location to unlock the MAC table command." };
+        }
+      }
+      return { locked: false, reason: "" };
+    }
+
+    function renderSummary() {
+      const parsed = state.derived.parsedCircuit;
+      const layer = determineLayer();
+      const summary = document.getElementById("summary");
+      summary.innerHTML = "";
+      const routingLabel = state.inputs.aggVendor === "Huawei"
+        ? "VPN Instance"
+        : state.inputs.aggVendor === "Juniper"
+          ? "Routing Instance"
+          : "VRF";
+      const items = [
+        { label: "Layer", value: layer || "—" },
+        { label: "Order Type", value: state.inputs.orderType || "—" },
+        { label: "Transport", value: state.inputs.transportType || "—" },
+        { label: "Aggregator Vendor", value: state.inputs.aggVendor || "—" },
+        { label: "UPE Vendor", value: state.inputs.upeVendor || "—" },
+        { label: "Sites", value: parsed ? `${parsed.siteA} ↔ ${parsed.siteZ}` : "—" },
+        { label: "Circuit Token", value: parsed ? parsed.fullToken : "—" },
+        { label: "VLAN", value: state.inputs.vlanId || "—" },
+        { label: routingLabel, value: state.inputs.vrfName || "—" }
+      ];
+
+      if (state.inputs.transportType === "UPE") {
+        items.push({ label: "UPE Name", value: state.inputs.upeName || "—" });
+        items.push({ label: "UPE Model", value: state.inputs.upeModel || "—" });
+      }
+
+      if (state.inputs.aggVendor === "Juniper" && layer === "L3") {
+        items.push({ label: "VLAN", value: state.inputs.vlanId || "—" });
+        items.push({ label: "Routing Instance", value: state.inputs.vrfName || "—" });
+        items.push({ label: "Customer IP", value: state.inputs.customerIp || "—" });
+        const ifaceList = Array.isArray(state.inputs.juniperIfaces)
+          ? state.inputs.juniperIfaces.filter(Boolean).join(", ")
+          : "";
+        items.push({ label: "Interfaces", value: ifaceList || "—" });
+      }
+
+      if (state.inputs.aggVendor === "Juniper" && layer === "L2") {
+        items.push({ label: "Circuit Token", value: parsed ? parsed.fullToken : "—" });
+        items.push({ label: "VLAN", value: state.inputs.vlanId || "—" });
+        const ifaceList = Array.isArray(state.inputs.juniperL2Ifaces)
+          ? state.inputs.juniperL2Ifaces.filter(Boolean).join(", ")
+          : "";
+        items.push({ label: "Interfaces", value: ifaceList || "—" });
+        if (state.inputs.juniperL2RiName) {
+          items.push({ label: "L2VPN Routing Instance", value: state.inputs.juniperL2RiName });
+        }
+      }
+
+      if (state.inputs.aggVendor === "Cisco" && layer === "L2") {
+        items.push({ label: "Service Token", value: parsed ? parsed.serviceToken : "—" });
+        items.push({ label: "Circuit Name", value: state.inputs.circuitName || "—" });
+        if (state.inputs.interfaceName) {
+          items.push({ label: "Interface", value: state.inputs.interfaceName });
+        }
+        if (state.inputs.bridgeDomain) {
+          items.push({ label: "BD Name", value: state.inputs.bridgeDomain });
+        }
+      }
+
+      if (state.inputs.aggVendor === "Huawei" && layer === "L2") {
+        const vlanId = state.inputs.vlanId;
+        items.push({ label: "VSI", value: vlanId ? `Vlan${vlanId}` : "—" });
+        if (state.inputs.huaweiL2Uplink) {
+          items.push({ label: "Uplink Interface", value: state.inputs.huaweiL2Uplink });
+        }
+      }
+      items.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "summary-item";
+        div.innerHTML = `<strong>${item.label}</strong>${item.value}`;
+        summary.appendChild(div);
+      });
+    }
+
+    function renderCommandRunner(commands) {
+      const runner = document.getElementById("commandRunner");
+      runner.innerHTML = "";
+
+      if (!commands.length) {
+        runner.innerHTML = "<div class='helper'>No commands available yet. Build the runner after completing required inputs.</div>";
+        return;
+      }
+
+      commands.forEach(command => {
+        const statusInfo = isLocked(command);
+        const isCopied = state.progress.aggCopied[command.id];
+        const card = document.createElement("div");
+        card.className = `command-card ${statusInfo.locked ? "locked" : ""}`;
+        card.dataset.commandId = command.id;
+
+      const header = document.createElement("div");
+      header.className = "command-header";
+      const titleHtml = command.title ? `<span class="small-tag">${command.title}</span>` : "";
+      header.innerHTML = `
+          <div class="inline"><strong>${command.label}</strong>${titleHtml}</div>
+          <div class="status ${isCopied ? "copied" : statusInfo.locked ? "locked" : "ready"}">
+            ${isCopied ? "Copied ✓" : statusInfo.locked ? "Locked" : "Ready"}
+          </div>
+        `;
+
+        const commandText = document.createElement("div");
+        commandText.className = "command-text";
+        commandText.textContent = command.template;
+
+        const footer = document.createElement("div");
+        footer.className = "inline";
+
+        const copyButton = document.createElement("button");
+        copyButton.textContent = "Copy";
+        copyButton.disabled = statusInfo.locked;
+        copyButton.addEventListener("click", () => handleAggCopy(command.id, command.template));
+
+        const statusText = document.createElement("span");
+        statusText.className = "small-tag";
+        statusText.textContent = statusInfo.locked ? statusInfo.reason : "Command ready to copy.";
+
+        footer.appendChild(copyButton);
+        footer.appendChild(statusText);
+
+        card.appendChild(header);
+        card.appendChild(commandText);
+        card.appendChild(footer);
+
+        if (command.id === 3 && state.progress.revealBridge && state.inputs.aggVendor === "Cisco" && determineLayer() === "L3") {
+          const bridgeWrap = document.createElement("div");
+          bridgeWrap.className = "progressive-fields";
+          bridgeWrap.innerHTML = `
+            <div>
+              <label for="bridgeGroup">Bridge Group *</label>
+              <input id="bridgeGroup" placeholder="BG-EXAMPLE" value="${state.inputs.bridgeGroup || ""}" />
+              <div class="error" data-error-for="bridgeGroup"></div>
+            </div>
+            <div>
+              <label for="bridgeDomain">Bridge Domain *</label>
+              <input id="bridgeDomain" placeholder="BD-EXAMPLE" value="${state.inputs.bridgeDomain || ""}" />
+              <div class="error" data-error-for="bridgeDomain"></div>
+            </div>
+          `;
+          card.appendChild(bridgeWrap);
+        }
+
+        if (command.id === 5 && state.inputs.aggVendor === "Cisco" && determineLayer() === "L3") {
+          const bviWrap = document.createElement("div");
+          bviWrap.className = "progressive-fields";
+          bviWrap.innerHTML = `
+            <div>
+              <label for="bviId">BVI ID *</label>
+              <input id="bviId" placeholder="263" value="${state.inputs.bviId || ""}" />
+              <div class="error" data-error-for="bviId"></div>
+            </div>
+            <div class="helper">Optional. Provide BVI ID to enable the Step 5 command.</div>
+          `;
+          card.insertBefore(bviWrap, commandText);
+        }
+
+        if (command.id === 3 && state.inputs.aggVendor === "Huawei" && determineLayer() === "L3") {
+          const interfaceWrap = document.createElement("div");
+          interfaceWrap.className = "progressive-fields";
+          interfaceWrap.innerHTML = `
+            <div>
+              <label for="huaweiInterface">Interface (Eth-Trunk) *</label>
+              <input id="huaweiInterface" placeholder="Eth-Trunk7" value="${state.inputs.interfaceName || ""}" />
+              <div class="helper">Required to unlock Step 3 for Huawei.</div>
+            </div>
+          `;
+          card.insertBefore(interfaceWrap, commandText);
+        }
+
+        if (command.id === 3 && state.inputs.aggVendor === "Huawei" && determineLayer() === "L2") {
+          const uplinkWrap = document.createElement("div");
+          uplinkWrap.className = "progressive-fields";
+          uplinkWrap.dataset.huaweiL2Uplink = "true";
+          uplinkWrap.style.display = state.progress.revealHuaweiL2Uplink ? "grid" : "none";
+          uplinkWrap.innerHTML = `
+            <div>
+              <label for="huaweiL2Uplink">Uplink Interface *</label>
+              <input id="huaweiL2Uplink" placeholder="Eth-Trunk65" value="${state.inputs.huaweiL2Uplink || ""}" />
+              <div class="helper">Required to unlock Step 3 policy/speed check.</div>
+            </div>
+          `;
+          card.insertBefore(uplinkWrap, commandText);
+        }
+
+        if (command.id === 1 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L3") {
+          const ifaceWrap = document.createElement("div");
+          ifaceWrap.className = "progressive-fields";
+          ifaceWrap.dataset.juniperIfaces = "true";
+          ifaceWrap.style.display = state.progress.revealJuniperIfaces ? "grid" : "none";
+          const countValue = state.inputs.juniperIfaceCount || "";
+          const countNumber = Math.min(10, Math.max(1, Number(countValue || 0)));
+          const ifaceInputs = [];
+          const ifaceList = Array.isArray(state.inputs.juniperIfaces) ? state.inputs.juniperIfaces : [];
+          if (countValue) {
+            for (let i = 0; i < countNumber; i += 1) {
+              const value = ifaceList[i] || "";
+              ifaceInputs.push(`
+                <div>
+                  <label for="juniperIface${i + 1}">Interface #${i + 1}</label>
+                  <input id="juniperIface${i + 1}" data-juniper-iface="${i}" placeholder="ae462.3904" value="${value}" />
+                </div>
+              `);
+            }
+          }
+          ifaceWrap.innerHTML = `
+            <div>
+              <label for="juniperIfaceCount">How many interfaces is this circuit configured on? *</label>
+              <input id="juniperIfaceCount" type="number" min="1" max="10" value="${countValue}" />
+              <div class="helper">Enter a number between 1 and 10 after Step 1 output.</div>
+            </div>
+            ${ifaceInputs.join("")}
+          `;
+          card.appendChild(ifaceWrap);
+        }
+
+        if (command.id === 1 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L2") {
+          const ifaceWrap = document.createElement("div");
+          ifaceWrap.className = "progressive-fields";
+          ifaceWrap.dataset.juniperL2Ifaces = "true";
+          ifaceWrap.style.display = state.progress.revealJuniperL2Ifaces ? "grid" : "none";
+          const countValue = state.inputs.juniperL2IfaceCount || "";
+          const countNumber = Math.min(10, Math.max(1, Number(countValue || 0)));
+          const ifaceInputs = [];
+          const ifaceList = Array.isArray(state.inputs.juniperL2Ifaces) ? state.inputs.juniperL2Ifaces : [];
+          if (countValue) {
+            for (let i = 0; i < countNumber; i += 1) {
+              const value = ifaceList[i] || "";
+              ifaceInputs.push(`
+                <div>
+                  <label for="juniperL2Iface${i + 1}">IFACE_BASE #${i + 1}</label>
+                  <input id="juniperL2Iface${i + 1}" data-juniper-l2-iface="${i}" placeholder="ae303" value="${value}" />
+                </div>
+              `);
+            }
+          }
+          ifaceWrap.innerHTML = `
+            <div>
+              <label for="juniperL2IfaceCount">How many interfaces is this circuit configured on? *</label>
+              <input id="juniperL2IfaceCount" type="number" min="1" max="10" value="${countValue}" />
+              <div class="helper">Enter a number between 1 and 10 after Step 1 output.</div>
+            </div>
+            ${ifaceInputs.join("")}
+          `;
+          card.appendChild(ifaceWrap);
+        }
+
+        if (command.id === 2 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L2") {
+          const riWrap = document.createElement("div");
+          riWrap.className = "progressive-fields";
+          riWrap.dataset.juniperL2Ri = "true";
+          riWrap.style.display = state.progress.revealJuniperL2Ri ? "grid" : "none";
+          riWrap.innerHTML = `
+            <div>
+              <label for="juniperL2RiName">L2VPN Routing Instance (VPLS instance) *</label>
+              <input id="juniperL2RiName" placeholder="RI-L2VPN-VC_2678900" value="${state.inputs.juniperL2RiName || ""}" />
+              <div class="helper">Required to unlock Steps 4 and 5.</div>
+            </div>
+          `;
+          card.appendChild(riWrap);
+        }
+
+        if (state.inputs.aggVendor === "Cisco" && determineLayer() === "L2") {
+          if (command.id === 3) {
+            const bdWrap = document.createElement("div");
+            bdWrap.className = "progressive-fields";
+            bdWrap.dataset.l2Bd = "true";
+            bdWrap.style.display = state.progress.revealL2Bd ? "grid" : "none";
+            bdWrap.innerHTML = `
+              <div>
+                <label for="bridgeGroup">Bridge Group *</label>
+                <input id="bridgeGroup" placeholder="BG-EXAMPLE" value="${state.inputs.bridgeGroup || ""}" />
+              </div>
+              <div>
+                <label for="bridgeDomain">Bridge Domain *</label>
+                <input id="bridgeDomain" placeholder="BD-EXAMPLE" value="${state.inputs.bridgeDomain || ""}" />
+                <div class="helper">Required to unlock Step 4.</div>
+              </div>
+            `;
+            card.appendChild(bdWrap);
+          }
+          if (command.id === 4) {
+            const cpuWrap = document.createElement("div");
+            cpuWrap.className = "progressive-fields";
+            cpuWrap.dataset.l2Cpu = "true";
+            cpuWrap.style.display = state.progress.revealL2Bd && state.inputs.bridgeGroup && state.inputs.bridgeDomain ? "grid" : "none";
+            const cpuChoice = state.inputs.cpuLocationChoice;
+            const cpuManual = state.inputs.cpuLocationManual || "";
+            const manualSelected = cpuChoice === "manual" || (!cpuChoice && cpuManual);
+            cpuWrap.innerHTML = `
+              <div>
+                <label for="cpuLocationSelect">MAC Location *</label>
+                <select id="cpuLocationSelect">
+                  <option value="">Select</option>
+                  <option value="unknown" ${cpuChoice === "unknown" ? "selected" : ""}>I don't know</option>
+                  <option value="manual" ${manualSelected ? "selected" : ""}>Manual entry</option>
+                </select>
+                <div class="helper">Required for MAC table check.</div>
+              </div>
+              <div id="cpuLocationManualField" style="display: ${manualSelected ? "block" : "none"};">
+                <label for="cpuLocationManual">Manual Location</label>
+                <input id="cpuLocationManual" placeholder="0/0/cPU0" value="${cpuManual}" />
+              </div>
+            `;
+            card.appendChild(cpuWrap);
+          }
+        }
+
+        runner.appendChild(card);
+      });
+
+      wireProgressiveInputs();
+    }
+
+    function getUpeSubifWarning(subif) {
+      const vlanId = Number(state.inputs.vlanId);
+      if (!vlanId || !subif) return "";
+      const match = subif.match(/\\.(\\d+)$/);
+      if (match && Number(match[1]) !== vlanId) {
+        return `Warning: ${subif} does not match VLAN ${vlanId}.`;
+      }
+      return "";
+    }
+
+    function renderUpeCommandRunner(commands) {
+      const runner = document.getElementById("upeCommandRunner");
+      runner.innerHTML = "";
+
+      if (!commands.length) {
+        runner.innerHTML = "<div class='helper'>No UPE commands available yet.</div>";
+        return;
+      }
+
+      commands.forEach(command => {
+        const statusInfo = isUpeLocked(command);
+        const isCopied = state.progress.upeCopied[command.id];
+        const card = document.createElement("div");
+        card.className = `command-card ${statusInfo.locked ? "locked" : ""}`;
+        card.dataset.upeCommandId = command.id;
+
+        const header = document.createElement("div");
+        header.className = "command-header";
+        const titleHtml = command.title ? `<span class="small-tag">${command.title}</span>` : "";
+        header.innerHTML = `
+          <div class="inline"><strong>${command.label}</strong>${titleHtml}</div>
+          <div class="status ${isCopied ? "copied" : statusInfo.locked ? "locked" : "ready"}">
+            ${isCopied ? "Copied ✓" : statusInfo.locked ? "Locked" : "Ready"}
+          </div>
+        `;
+
+        const commandText = document.createElement("div");
+        commandText.className = "command-text";
+        commandText.textContent = command.template;
+
+        const footer = document.createElement("div");
+        footer.className = "inline";
+
+        const copyButton = document.createElement("button");
+        copyButton.textContent = "Copy";
+        copyButton.disabled = statusInfo.locked;
+        copyButton.addEventListener("click", () => handleUpeCopy(command.id, command.template));
+
+        const statusText = document.createElement("span");
+        statusText.className = "small-tag";
+        statusText.textContent = statusInfo.locked ? statusInfo.reason : "Command ready to copy.";
+
+        footer.appendChild(copyButton);
+        footer.appendChild(statusText);
+
+        card.appendChild(header);
+        card.appendChild(commandText);
+        card.appendChild(footer);
+
+        if (command.id === "upe-1") {
+          const subifWrap = document.createElement("div");
+          subifWrap.className = "progressive-fields";
+          subifWrap.dataset.upeSubifs = "true";
+          subifWrap.style.display = state.progress.revealUpeSubifs ? "grid" : "none";
+          const countValue = state.inputs.upeSubifCount || "";
+          const countNumber = Math.min(10, Math.max(1, Number(countValue || 0)));
+          const subifInputs = [];
+          const subifList = Array.isArray(state.inputs.upeSubinterfaces) ? state.inputs.upeSubinterfaces : [];
+          if (countValue) {
+            for (let i = 0; i < countNumber; i += 1) {
+              const value = subifList[i] || "";
+              const warning = getUpeSubifWarning(value);
+              subifInputs.push(`
+                <div>
+                  <label for="upeSubif${i + 1}">UPE Subinterface #${i + 1}</label>
+                  <input id="upeSubif${i + 1}" data-upe-subif="${i}" placeholder="Te0/0/0/0.2991" value="${value}" />
+                  ${warning ? `<div class="warning">${warning}</div>` : ""}
+                </div>
+              `);
+            }
+          }
+          const uplinkOptions = subifList.filter(Boolean)
+            .map(subif => `<option value="${subif}" ${state.inputs.upeUplinkSubif === subif ? "selected" : ""}>${subif}</option>`)
+            .join("");
+          const showUplink = countValue && subifList.length === countNumber && subifList.every(Boolean);
+          subifWrap.innerHTML = `
+            <div>
+              <label for="upeSubifCount">How many subinterfaces did you find? *</label>
+              <input id="upeSubifCount" type="number" min="1" max="10" value="${countValue}" />
+              <div class="helper">Enter a number between 1 and 10 after Step 1 output.</div>
+            </div>
+            ${subifInputs.join("")}
+            <div id="upeUplinkField" style="display: ${showUplink ? "block" : "none"};">
+              <label for="upeUplinkSubif">Select the uplink subinterface *</label>
+              <select id="upeUplinkSubif">
+                <option value="">Select</option>
+                ${uplinkOptions}
+              </select>
+            </div>
+          `;
+          card.appendChild(subifWrap);
+        }
+
+        if (command.id === "upe-4") {
+          const bridgeWrap = document.createElement("div");
+          bridgeWrap.className = "progressive-fields";
+          bridgeWrap.dataset.upeBridge = "true";
+          bridgeWrap.style.display = state.progress.revealUpeBridge ? "grid" : "none";
+          const cpuChoice = state.inputs.upeCpuLocationChoice;
+          const cpuManual = state.inputs.upeCpuLocationManual || "";
+          const manualSelected = cpuChoice === "manual" || (!cpuChoice && cpuManual);
+          const bridgeDomainValue = state.inputs.upeBridgeDomain || (state.inputs.vlanId ? String(state.inputs.vlanId) : "");
+          bridgeWrap.innerHTML = `
+            <div>
+              <label for="upeBridgeGroup">Bridge Group *</label>
+              <input id="upeBridgeGroup" placeholder="BG-EXAMPLE" value="${state.inputs.upeBridgeGroup || ""}" />
+            </div>
+            <div>
+              <label for="upeBridgeDomain">Bridge Domain *</label>
+              <input id="upeBridgeDomain" placeholder="BD-EXAMPLE" value="${bridgeDomainValue}" />
+              <div class="helper">Suggested: VLAN ID.</div>
+            </div>
+            <div>
+              <label for="upeCpuLocationSelect">CPU Location *</label>
+              <select id="upeCpuLocationSelect">
+                <option value="">Select</option>
+                <option value="0/0/CPU0" ${cpuChoice === "0/0/CPU0" ? "selected" : ""}>0/0/CPU0</option>
+                <option value="0/1/CPU0" ${cpuChoice === "0/1/CPU0" ? "selected" : ""}>0/1/CPU0</option>
+                <option value="manual" ${manualSelected ? "selected" : ""}>Manual entry</option>
+              </select>
+            </div>
+            <div id="upeCpuLocationManualField" style="display: ${manualSelected ? "block" : "none"};">
+              <label for="upeCpuLocationManual">Manual CPU Location</label>
+              <input id="upeCpuLocationManual" placeholder="0/0/CPU0" value="${cpuManual}" />
+            </div>
+          `;
+          card.appendChild(bridgeWrap);
+        }
+
+        runner.appendChild(card);
+      });
+
+      wireProgressiveInputs();
+    }
+
+    function renderUpeRunner() {
+      const panel = document.getElementById("upeRunnerPanel");
+      const notImplemented = document.getElementById("upeNotImplemented");
+      const runner = document.getElementById("upeCommandRunner");
+      if (!panel || !notImplemented) return;
+      const shouldShow = state.inputs.transportType === "UPE" && state.inputs.upeName;
+      panel.style.display = shouldShow ? "grid" : "none";
+      if (!shouldShow) {
+        return;
+      }
+
+      const upeModel = buildUpeCommandModel();
+      if (!upeModel.implemented) {
+        notImplemented.style.display = "block";
+        notImplemented.textContent = "Template not yet implemented for the selected UPE model.";
+        if (runner) runner.innerHTML = "";
+        return;
+      }
+      notImplemented.style.display = "none";
+      notImplemented.textContent = "";
+      renderUpeCommandRunner(upeModel.commands);
+    }
+
+    function wireProgressiveInputs() {
+      const bridgeGroupEl = document.getElementById("bridgeGroup");
+      const bridgeDomainEl = document.getElementById("bridgeDomain");
+      const bviEl = document.getElementById("bviId");
+      const huaweiInterfaceEl = document.getElementById("huaweiInterface");
+      const huaweiL2UplinkEl = document.getElementById("huaweiL2Uplink");
+      const juniperIfaceCountEl = document.getElementById("juniperIfaceCount");
+      const juniperL2IfaceCountEl = document.getElementById("juniperL2IfaceCount");
+      const juniperL2RiEl = document.getElementById("juniperL2RiName");
+      const cpuLocationSelectEl = document.getElementById("cpuLocationSelect");
+      const cpuLocationManualEl = document.getElementById("cpuLocationManual");
+      const upeSubifCountEl = document.getElementById("upeSubifCount");
+      const upeUplinkSubifEl = document.getElementById("upeUplinkSubif");
+      const upeBridgeGroupEl = document.getElementById("upeBridgeGroup");
+      const upeBridgeDomainEl = document.getElementById("upeBridgeDomain");
+      const upeCpuLocationSelectEl = document.getElementById("upeCpuLocationSelect");
+      const upeCpuLocationManualEl = document.getElementById("upeCpuLocationManual");
+
+      if (bridgeGroupEl) {
+        bridgeGroupEl.addEventListener("input", () => {
+          state.inputs.bridgeGroup = bridgeGroupEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (bridgeDomainEl) {
+        bridgeDomainEl.addEventListener("input", () => {
+          state.inputs.bridgeDomain = bridgeDomainEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (bviEl) {
+        bviEl.addEventListener("input", () => {
+          state.inputs.bviId = bviEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (huaweiInterfaceEl) {
+        huaweiInterfaceEl.addEventListener("input", () => {
+          state.inputs.interfaceName = huaweiInterfaceEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (huaweiL2UplinkEl) {
+        huaweiL2UplinkEl.addEventListener("input", () => {
+          state.inputs.huaweiL2Uplink = huaweiL2UplinkEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (juniperIfaceCountEl) {
+        juniperIfaceCountEl.addEventListener("input", () => {
+          const count = Math.min(10, Math.max(1, Number(juniperIfaceCountEl.value || 0)));
+          state.inputs.juniperIfaceCount = juniperIfaceCountEl.value.trim();
+          const list = Array.isArray(state.inputs.juniperIfaces) ? state.inputs.juniperIfaces : [];
+          const next = [];
+          if (count) {
+            for (let i = 0; i < count; i += 1) {
+              next.push(list[i] || "");
+            }
+          }
+          state.inputs.juniperIfaces = next;
+          renderCommandRunner(buildCommandModel());
+        });
+      }
+      if (juniperL2IfaceCountEl) {
+        juniperL2IfaceCountEl.addEventListener("input", () => {
+          const count = Math.min(10, Math.max(1, Number(juniperL2IfaceCountEl.value || 0)));
+          state.inputs.juniperL2IfaceCount = juniperL2IfaceCountEl.value.trim();
+          const list = Array.isArray(state.inputs.juniperL2Ifaces) ? state.inputs.juniperL2Ifaces : [];
+          const next = [];
+          if (count) {
+            for (let i = 0; i < count; i += 1) {
+              next.push(list[i] || "");
+            }
+          }
+          state.inputs.juniperL2Ifaces = next;
+          renderCommandRunner(buildCommandModel());
+        });
+      }
+      const ifaceInputs = document.querySelectorAll("[data-juniper-iface]");
+      ifaceInputs.forEach(input => {
+        const index = Number(input.dataset.juniperIface);
+        input.addEventListener("input", () => {
+          const list = Array.isArray(state.inputs.juniperIfaces) ? [...state.inputs.juniperIfaces] : [];
+          list[index] = input.value.trim();
+          state.inputs.juniperIfaces = list;
+          updateCommandRunnerStates();
+        });
+      });
+      const l2IfaceInputs = document.querySelectorAll("[data-juniper-l2-iface]");
+      l2IfaceInputs.forEach(input => {
+        const index = Number(input.dataset.juniperL2Iface);
+        input.addEventListener("input", () => {
+          const list = Array.isArray(state.inputs.juniperL2Ifaces) ? [...state.inputs.juniperL2Ifaces] : [];
+          list[index] = input.value.trim();
+          state.inputs.juniperL2Ifaces = list;
+          updateCommandRunnerStates();
+        });
+      });
+      if (juniperL2RiEl) {
+        juniperL2RiEl.addEventListener("input", () => {
+          state.inputs.juniperL2RiName = juniperL2RiEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (cpuLocationSelectEl) {
+        cpuLocationSelectEl.addEventListener("change", () => {
+          state.inputs.cpuLocationChoice = cpuLocationSelectEl.value;
+          updateCommandRunnerStates();
+        });
+      }
+      if (cpuLocationManualEl) {
+        cpuLocationManualEl.addEventListener("input", () => {
+          state.inputs.cpuLocationManual = cpuLocationManualEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (upeSubifCountEl) {
+        upeSubifCountEl.addEventListener("input", () => {
+          const count = Math.min(10, Math.max(1, Number(upeSubifCountEl.value || 0)));
+          state.inputs.upeSubifCount = upeSubifCountEl.value.trim();
+          const list = Array.isArray(state.inputs.upeSubinterfaces) ? state.inputs.upeSubinterfaces : [];
+          const next = [];
+          if (count) {
+            for (let i = 0; i < count; i += 1) {
+              next.push(list[i] || "");
+            }
+          }
+          state.inputs.upeSubinterfaces = next;
+          if (!next.includes(state.inputs.upeUplinkSubif)) {
+            state.inputs.upeUplinkSubif = "";
+          }
+          renderUpeRunner();
+        });
+      }
+      const upeSubifInputs = document.querySelectorAll("[data-upe-subif]");
+      upeSubifInputs.forEach(input => {
+        const index = Number(input.dataset.upeSubif);
+        input.addEventListener("input", () => {
+          const list = Array.isArray(state.inputs.upeSubinterfaces) ? [...state.inputs.upeSubinterfaces] : [];
+          list[index] = input.value.trim();
+          state.inputs.upeSubinterfaces = list;
+          if (!list.includes(state.inputs.upeUplinkSubif)) {
+            state.inputs.upeUplinkSubif = "";
+          }
+          renderUpeRunner();
+        });
+      });
+      if (upeUplinkSubifEl) {
+        upeUplinkSubifEl.addEventListener("change", () => {
+          state.inputs.upeUplinkSubif = upeUplinkSubifEl.value;
+          updateCommandRunnerStates();
+        });
+      }
+      if (upeBridgeGroupEl) {
+        upeBridgeGroupEl.addEventListener("input", () => {
+          state.inputs.upeBridgeGroup = upeBridgeGroupEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (upeBridgeDomainEl) {
+        upeBridgeDomainEl.addEventListener("input", () => {
+          state.inputs.upeBridgeDomain = upeBridgeDomainEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+      if (upeCpuLocationSelectEl) {
+        upeCpuLocationSelectEl.addEventListener("change", () => {
+          state.inputs.upeCpuLocationChoice = upeCpuLocationSelectEl.value;
+          updateCommandRunnerStates();
+        });
+      }
+      if (upeCpuLocationManualEl) {
+        upeCpuLocationManualEl.addEventListener("input", () => {
+          state.inputs.upeCpuLocationManual = upeCpuLocationManualEl.value.trim();
+          updateCommandRunnerStates();
+        });
+      }
+    }
+
+    function updateCommandRunnerStates() {
+      const commands = buildCommandModel();
+      commands.forEach(command => {
+        const card = document.querySelector(`[data-command-id="${command.id}"]`);
+        if (!card) return;
+        const statusInfo = isLocked(command);
+        const isCopied = state.progress.aggCopied[command.id];
+        card.classList.toggle("locked", statusInfo.locked);
+
+        const statusEl = card.querySelector(".status");
+        if (statusEl) {
+          statusEl.className = `status ${isCopied ? "copied" : statusInfo.locked ? "locked" : "ready"}`;
+          statusEl.textContent = isCopied ? "Copied ✓" : statusInfo.locked ? "Locked" : "Ready";
+        }
+
+        const commandText = card.querySelector(".command-text");
+        if (commandText) {
+          commandText.textContent = command.template;
+        }
+
+        const copyButton = card.querySelector("button");
+        if (copyButton) {
+          copyButton.disabled = statusInfo.locked;
+        }
+
+        const statusText = card.querySelector(".small-tag");
+        if (statusText) {
+          statusText.textContent = statusInfo.locked ? statusInfo.reason : "Command ready to copy.";
+        }
+
+        const l2BdWrap = card.querySelector("[data-l2-bd]");
+        if (l2BdWrap) {
+          l2BdWrap.style.display = state.progress.revealL2Bd ? "grid" : "none";
+        }
+
+        const l2CpuWrap = card.querySelector("[data-l2-cpu]");
+        if (l2CpuWrap) {
+          l2CpuWrap.style.display = state.progress.revealL2Bd && state.inputs.bridgeGroup && state.inputs.bridgeDomain ? "grid" : "none";
+          const cpuSelect = l2CpuWrap.querySelector("#cpuLocationSelect");
+          const cpuManualField = l2CpuWrap.querySelector("#cpuLocationManualField");
+          const cpuManualInput = l2CpuWrap.querySelector("#cpuLocationManual");
+          if (cpuSelect) {
+            const choice = state.inputs.cpuLocationChoice;
+            cpuSelect.value = choice || "";
+            if (!choice && state.inputs.cpuLocationManual) {
+              cpuSelect.value = "manual";
+            }
+          }
+          if (cpuManualField) {
+            const showManual = state.inputs.cpuLocationChoice === "manual";
+            cpuManualField.style.display = showManual ? "block" : "none";
+          }
+          if (cpuManualInput) {
+            cpuManualInput.value = state.inputs.cpuLocationManual || "";
+          }
+        }
+
+        const huaweiL2Wrap = card.querySelector("[data-huawei-l2-uplink]");
+        if (huaweiL2Wrap) {
+          huaweiL2Wrap.style.display = state.progress.revealHuaweiL2Uplink ? "grid" : "none";
+        }
+        const juniperIfaceWrap = card.querySelector("[data-juniper-ifaces]");
+        if (juniperIfaceWrap) {
+          juniperIfaceWrap.style.display = state.progress.revealJuniperIfaces ? "grid" : "none";
+          const countInput = juniperIfaceWrap.querySelector("#juniperIfaceCount");
+          if (countInput) {
+            countInput.value = state.inputs.juniperIfaceCount || "";
+          }
+          const ifaceList = Array.isArray(state.inputs.juniperIfaces) ? state.inputs.juniperIfaces : [];
+          ifaceList.forEach((value, idx) => {
+            const input = juniperIfaceWrap.querySelector(`#juniperIface${idx + 1}`);
+            if (input) {
+              input.value = value || "";
+            }
+          });
+        }
+        const juniperL2Wrap = card.querySelector("[data-juniper-l2-ifaces]");
+        if (juniperL2Wrap) {
+          juniperL2Wrap.style.display = state.progress.revealJuniperL2Ifaces ? "grid" : "none";
+          const countInput = juniperL2Wrap.querySelector("#juniperL2IfaceCount");
+          if (countInput) {
+            countInput.value = state.inputs.juniperL2IfaceCount || "";
+          }
+          const ifaceList = Array.isArray(state.inputs.juniperL2Ifaces) ? state.inputs.juniperL2Ifaces : [];
+          ifaceList.forEach((value, idx) => {
+            const input = juniperL2Wrap.querySelector(`#juniperL2Iface${idx + 1}`);
+            if (input) {
+              input.value = value || "";
+            }
+          });
+        }
+        const juniperL2RiWrap = card.querySelector("[data-juniper-l2-ri]");
+        if (juniperL2RiWrap) {
+          juniperL2RiWrap.style.display = state.progress.revealJuniperL2Ri ? "grid" : "none";
+          const riInput = juniperL2RiWrap.querySelector("#juniperL2RiName");
+          if (riInput) {
+            riInput.value = state.inputs.juniperL2RiName || "";
+          }
+        }
+
+      });
+      renderUpeRunner();
+    }
+
+    function handleAggCopy(stepId, commandText) {
+      navigator.clipboard.writeText(commandText).then(() => {
+        state.progress.aggCopied[stepId] = true;
+        if (stepId === 3 && state.inputs.aggVendor === "Cisco" && determineLayer() === "L3") {
+          state.progress.revealBridge = true;
+        }
+        if (stepId === 3 && state.inputs.aggVendor === "Cisco" && determineLayer() === "L2") {
+          state.progress.revealL2Bd = true;
+        }
+        if (stepId === 2 && state.inputs.aggVendor === "Huawei" && determineLayer() === "L2") {
+          state.progress.revealHuaweiL2Uplink = true;
+        }
+        if (stepId === 1 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L3") {
+          state.progress.revealJuniperIfaces = true;
+        }
+        if (stepId === 1 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L2") {
+          state.progress.revealJuniperL2Ifaces = true;
+        }
+        if (stepId === 2 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L2") {
+          state.progress.revealJuniperL2Ri = true;
+        }
+        renderCommandRunner(buildCommandModel());
+        renderUpeRunner();
+      }).catch(() => {
+        const textarea = document.createElement("textarea");
+        textarea.value = commandText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        state.progress.aggCopied[stepId] = true;
+        if (stepId === 3 && state.inputs.aggVendor === "Cisco" && determineLayer() === "L3") {
+          state.progress.revealBridge = true;
+        }
+        if (stepId === 3 && state.inputs.aggVendor === "Cisco" && determineLayer() === "L2") {
+          state.progress.revealL2Bd = true;
+        }
+        if (stepId === 2 && state.inputs.aggVendor === "Huawei" && determineLayer() === "L2") {
+          state.progress.revealHuaweiL2Uplink = true;
+        }
+        if (stepId === 1 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L3") {
+          state.progress.revealJuniperIfaces = true;
+        }
+        if (stepId === 1 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L2") {
+          state.progress.revealJuniperL2Ifaces = true;
+        }
+        if (stepId === 2 && state.inputs.aggVendor === "Juniper" && determineLayer() === "L2") {
+          state.progress.revealJuniperL2Ri = true;
+        }
+        renderCommandRunner(buildCommandModel());
+        renderUpeRunner();
+      });
+    }
+
+    function handleUpeCopy(stepId, commandText) {
+      navigator.clipboard.writeText(commandText).then(() => {
+        state.progress.upeCopied[stepId] = true;
+        if (stepId === "upe-1") {
+          state.progress.revealUpeSubifs = true;
+        }
+        if (stepId === "upe-4") {
+          state.progress.revealUpeBridge = true;
+          if (!state.inputs.upeBridgeDomain && state.inputs.vlanId) {
+            state.inputs.upeBridgeDomain = String(state.inputs.vlanId);
+          }
+        }
+        renderUpeRunner();
+      }).catch(() => {
+        const textarea = document.createElement("textarea");
+        textarea.value = commandText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        state.progress.upeCopied[stepId] = true;
+        if (stepId === "upe-1") {
+          state.progress.revealUpeSubifs = true;
+        }
+        if (stepId === "upe-4") {
+          state.progress.revealUpeBridge = true;
+          if (!state.inputs.upeBridgeDomain && state.inputs.vlanId) {
+            state.inputs.upeBridgeDomain = String(state.inputs.vlanId);
+          }
+        }
+        renderUpeRunner();
+      });
+    }
+
+    function renderLayerSection() {
+      const layerInfo = document.getElementById("layerInfo");
+      const override = document.getElementById("layerOverride");
+      if (!state.derived.inferredLayer) {
+        layerInfo.textContent = "Layer will be inferred from the circuit token.";
+        override.style.display = "none";
+        return;
+      }
+      if (state.derived.inferredLayer === "UNKNOWN") {
+        layerInfo.textContent = "Service token not recognized. Select a manual layer override.";
+        override.style.display = "flex";
+      } else {
+        layerInfo.textContent = `Inferred Layer: ${state.derived.inferredLayer}.`;
+        override.style.display = "none";
+      }
+    }
+
+    function updateVrfLabel() {
+      const label = document.getElementById("vrfLabel");
+      const labelText = document.getElementById("vrfLabelText");
+      if (state.inputs.aggVendor === "Huawei") {
+        label.textContent = "Huawei: VPN Instance";
+        if (labelText) labelText.textContent = "VPN Instance *";
+      } else if (state.inputs.aggVendor === "Juniper") {
+        label.textContent = "Juniper: Routing Instance";
+        if (labelText) labelText.textContent = "Routing Instance *";
+      } else {
+        label.textContent = "Cisco: VRF Name";
+        if (labelText) labelText.textContent = "VRF Name *";
+      }
+    }
+
+    function toggleUpeFields() {
+      const showUpe = state.inputs.transportType === "UPE";
+      const upeNameField = document.getElementById("upeNameField");
+      const upeVendorField = document.getElementById("upeVendorField");
+      const upeModelField = document.getElementById("upeModelField");
+      if (upeNameField) upeNameField.style.display = showUpe ? "block" : "none";
+      if (upeVendorField) upeVendorField.style.display = showUpe ? "block" : "none";
+      if (upeModelField) upeModelField.style.display = showUpe ? "block" : "none";
+      if (!showUpe) {
+        state.inputs.upeName = "";
+        state.inputs.upeVendor = "";
+        state.inputs.upeModel = "";
+        state.inputs.upeSubifCount = "";
+        state.inputs.upeSubinterfaces = [];
+        state.inputs.upeUplinkSubif = "";
+        state.inputs.upeBridgeGroup = "";
+        state.inputs.upeBridgeDomain = "";
+        state.inputs.upeCpuLocationChoice = "";
+        state.inputs.upeCpuLocationManual = "";
+        state.progress.upeCopied = {};
+        state.progress.revealUpeSubifs = false;
+        state.progress.revealUpeBridge = false;
+        const upeNameInput = document.getElementById("upeName");
+        const upeVendorInput = document.getElementById("upeVendor");
+        const upeModelInput = document.getElementById("upeModel");
+        if (upeNameInput) upeNameInput.value = "";
+        if (upeVendorInput) upeVendorInput.value = "";
+        if (upeModelInput) upeModelInput.value = "";
+        setError("upeName", "");
+        setError("upeVendor", "");
+        setError("upeModel", "");
+      }
+      renderUpeRunner();
+    }
+
+    function toggleInterfaceField() {
+      const interfaceField = document.getElementById("interfaceField");
+      if (!interfaceField) return;
+      const hideInterface = state.inputs.aggVendor === "Huawei" || state.inputs.aggVendor === "Juniper";
+      interfaceField.style.display = hideInterface ? "none" : "block";
+      if (hideInterface) {
+        const interfaceInput = document.getElementById("interfaceName");
+        if (interfaceInput) interfaceInput.value = "";
+        state.inputs.interfaceName = "";
+      }
+    }
+
+
+    function renderNotImplemented(layer) {
+      const container = document.getElementById("notImplemented");
+      const supported = (state.inputs.aggVendor === "Cisco" && (layer === "L3" || layer === "L2"))
+        || (state.inputs.aggVendor === "Huawei" && (layer === "L3" || layer === "L2"))
+        || (state.inputs.aggVendor === "Juniper" && (layer === "L3" || layer === "L2"));
+      if (state.inputs.aggVendor && layer && !supported) {
+        container.style.display = "block";
+        container.textContent = `Template not yet implemented for: ${state.inputs.aggVendor} + ${layer}. MVP currently supports Cisco, Huawei, and Juniper Layer 2, plus Cisco/Huawei/Juniper Layer 3.`;
+      } else {
+        container.style.display = "none";
+        container.textContent = "";
+      }
+    }
+
+    function buildRunner() {
+      const validation = validateAll();
+      updateDerived();
+      renderLayerSection();
+      updateVrfLabel();
+      toggleUpeFields();
+      toggleInterfaceField();
+      renderSummary();
+
+      const layer = determineLayer();
+      renderNotImplemented(layer);
+
+      if (!validation.isValid) {
+        renderCommandRunner([]);
+        renderUpeRunner();
+        document.getElementById("download").disabled = true;
+        document.getElementById("escalationNote").style.display = "none";
+        return;
+      }
+
+      const supported = (state.inputs.aggVendor === "Cisco" && (layer === "L3" || layer === "L2"))
+        || (state.inputs.aggVendor === "Huawei" && (layer === "L3" || layer === "L2"))
+        || (state.inputs.aggVendor === "Juniper" && (layer === "L3" || layer === "L2"));
+      if (!supported) {
+        renderCommandRunner([]);
+        renderUpeRunner();
+        document.getElementById("download").disabled = true;
+        document.getElementById("escalationNote").style.display = "none";
+        return;
+      }
+
+      state.progress.aggCopied = {};
+      state.progress.upeCopied = {};
+      const commands = buildCommandModel();
+      renderCommandRunner(commands);
+      renderUpeRunner();
+      document.getElementById("download").disabled = false;
+      const escalationNote = document.getElementById("escalationNote");
+      if (state.inputs.aggVendor === "Huawei" && layer === "L3") {
+        escalationNote.textContent = "Escalation condition: If VLANIF missing, MAC absent, policy not allowing VLAN, ping fails, or BGP peer not Established \u2192 escalate to Activation.";
+        escalationNote.style.display = "block";
+      } else {
+        escalationNote.style.display = "none";
+      }
+    }
+
+    function resetForm() {
+      document.querySelectorAll("input, select").forEach(el => {
+        if (el.type === "radio") {
+          el.checked = false;
+        } else {
+          el.value = "";
+        }
+      });
+      state.inputs = {
+        circuitName: "",
+        orderType: "",
+        transportType: "",
+        aggregatorPe: "",
+        upeName: "",
+        upeModel: "",
+        vlanId: "",
+        interfaceName: "",
+        aggVendor: "",
+        upeVendor: "",
+        customerIp: "",
+        defaultGateway: "",
+        vrfName: "",
+        huaweiL2Uplink: "",
+        juniperIfaceCount: "",
+        juniperIfaces: [],
+        juniperL2IfaceCount: "",
+        juniperL2Ifaces: [],
+        juniperL2RiName: "",
+        upeSubifCount: "",
+        upeSubinterfaces: [],
+        upeUplinkSubif: "",
+        upeBridgeGroup: "",
+        upeBridgeDomain: "",
+        upeCpuLocationChoice: "",
+        upeCpuLocationManual: "",
+        layerChoice: "",
+        bridgeGroup: "",
+        bridgeDomain: "",
+        cpuLocationChoice: "",
+        cpuLocationManual: "",
+        bviId: ""
+      };
+      state.derived = { parsedCircuit: null, inferredLayer: "", layerSource: "" };
+      state.progress = {
+        aggCopied: {},
+        upeCopied: {},
+        revealBridge: false,
+        revealL2Bd: false,
+        revealHuaweiL2Uplink: false,
+        revealJuniperIfaces: false,
+        revealJuniperL2Ifaces: false,
+        revealJuniperL2Ri: false,
+        revealUpeSubifs: false,
+        revealUpeBridge: false
+      };
+      fieldIds.forEach(field => setError(field, ""));
+      setError("layerChoice", "");
+      renderSummary();
+      renderCommandRunner([]);
+      renderUpeRunner();
+      renderLayerSection();
+      updateVrfLabel();
+      toggleUpeFields();
+      toggleInterfaceField();
+      document.getElementById("download").disabled = true;
+    }
+
+    function downloadCommands() {
+      const commands = buildCommandModel();
+      const upeModel = buildUpeCommandModel();
+      const upeCommands = upeModel.implemented ? upeModel.commands : [];
+      const lines = [...commands, ...upeCommands].map(cmd => cmd.template).join("\n");
+      const blob = new Blob([lines], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "verification-commands.txt";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("generate").addEventListener("click", buildRunner);
+    document.getElementById("reset").addEventListener("click", resetForm);
+    document.getElementById("download").addEventListener("click", downloadCommands);
+
+    document.querySelectorAll("input, select").forEach(el => {
+      if (el.id === "generate" || el.id === "reset" || el.id === "download") return;
+      el.addEventListener("input", () => {
+        if (el.id === "circuitName") {
+          const start = el.selectionStart;
+          el.value = el.value.toUpperCase();
+          el.setSelectionRange(start, start);
+          updateDerived();
+          renderLayerSection();
+        }
+        updateVrfLabel();
+        if (el.id === "transportType") {
+          syncInputs();
+          toggleUpeFields();
+        }
+        if (el.id === "aggVendor") {
+          syncInputs();
+          toggleInterfaceField();
+          updateVrfLabel();
+        }
+        if (el.id === "huaweiL2Uplink") {
+          syncInputs();
+        }
+      });
+      el.addEventListener("change", () => {
+        if (el.name === "layerChoice") {
+          state.inputs.layerChoice = el.value;
+        }
+        updateVrfLabel();
+        if (el.id === "transportType") {
+          syncInputs();
+          toggleUpeFields();
+        }
+        if (el.id === "aggVendor") {
+          syncInputs();
+          toggleInterfaceField();
+          updateVrfLabel();
+        }
+      });
+    });
+
+    renderSummary();
+    renderCommandRunner([]);
+    renderUpeRunner();
+    toggleUpeFields();
+    toggleInterfaceField();
+  </script>
+</body>
+</html>
